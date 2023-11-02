@@ -1,13 +1,13 @@
 package main
 
 import (
-  "fmt" //for formatting messages to the console
-  "net/http" //for web service
-  "log" //logging errors
-  "errors" //creating new errors
-  "os" //reading and writing files
-  "html/template" //for generating the page HTML
-  "strconv" //converting status codes to string
+	"errors"        //creating new errors
+	"fmt"           //for formatting messages to the console
+	"html/template" //for generating the page HTML
+	"log"           //logging errors
+	"net/http"      //for web service
+	"os"            //reading and writing files
+	"strconv"       //converting status codes to string
 )
 
 // Structure to represent each wiki page
@@ -125,25 +125,25 @@ func saveHandler(writer http.ResponseWriter, request *http.Request) {
 // home screen
 // home screen should show a bulleted list of all available to view wiki pages
 func homeHandler(writer http.ResponseWriter, request *http.Request) {
-	//TODO
-	//a way to get all the files in the Documents folder
-	entries, _ := os.ReadDir("WebComponents/Documents")
-	var i int = 0
-	var name string = "namePlacehold"
-	var nameArray []string = make([]string, len(entries), len(entries))
-	//get a file name from a file descriptor, removing the .csoc file extension
-	for _, e := range entries {
-		name = (e.Name())
-		extension := filepath.Ext(e.Name())
-		name = e.Name()[:len(e.Name())-len(extension)]
-		nameArray[i] = name
-		i = i + 1
+	//get all entries in the Documents directory
+	files, readErr := os.ReadDir("WebComponents/Documents")
+	if readErr != nil {
+		log.Fatal(readErr)
+		return
 	}
-	//use the template home.html to display the page
-
-	//remember, setup some form of error handling to make your life easier
-
-	return
+	//prepare a slice to hold all of the resulting file names
+	var fileNames []string = make([]string, len(files), len(files))
+	//insert the file names into fileNames
+	for index, file := range files {
+		var name string = file.Name()
+		fileNames[index] = name[0 : len(name)-5]
+	}
+	//execute the template to the user
+	parsedTemplate, _ := template.ParseFiles("WebComponents/Templates/home.html")
+	err := parsedTemplate.Execute(writer, fileNames)
+	if err != nil {
+		log.Println("Error executing template :", err)
+	}
 }
 
 func main() {
@@ -156,6 +156,14 @@ func main() {
 	// Create handlers
 	http.HandleFunc("/", getFileContents)
 	http.HandleFunc("/view/", viewHandler)
+	// Create listen and serve to start server
+
+	fmt.Printf("Running...\n")
+	//TODO:
+	// Create handlers
+	http.HandleFunc("/", getFileContents)
+	http.HandleFunc("/view/", viewHandler)
+	http.HandleFunc("/home/", viewHandler)
 	// Create listen and serve to start server
 
 	log.Fatal(http.ListenAndServe(":8000", nil))
